@@ -1,0 +1,7 @@
+Ajout de src/VelibLLM.Core.Tests/EvaluationRunnerTests.cs avec 3 tests [Fact] et des fakes locaux pour IEvaluationChatAgent et IAnswerJudge : liste vide, exception de l'agent (les autres cas sont tout de même évalués), exception du juge (Score = 0, Reason commençant par 'Judge call failed'). Aucun réseau. Le fichier de production, les .csproj, le .slnx et AGENTS.md ne sont pas modifiés.
+
+Files changed
+src/VelibLLM.Core.Tests/EvaluationRunnerTests.cs
+Tests declared by the agent
+✔ dotnet build TestLLMVlib.slnx
+✔ dotnet test TestLLMVlib.slnx --no-build

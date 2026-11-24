@@ -1,0 +1,24 @@
+Lecture seule : rien n'a été créé ni exécuté. EvaluationRunner(IEvaluationChatAgent, IAnswerJudge) est sealed et sa logique est testable sans réseau. Le projet de tests existe déjà (VelibLLM.Core.Tests.csproj, xunit 2.9.3, ImplicitUsings activé). Il référence TestLLMVlib.csproj, donc VelibLLM.Evaluation est accessible par transitivité, sans référence à ajouter. Constats dans EvaluationRunner.cs : liste vide → les précisions valent 0, AverageLatencyMs vaut 0 et les trois champs judge valent null. Exception de ChatAsync → catch dans RunCaseAsync, Error = exception.Message, et comme les booléens restent à false, Success = false. Exception de JudgeAsync → TryJudgeAsync renvoie Score = 0 et Reason = 'Judge call failed: ...'.
+
+Relevant files
+src/VelibLLM.Evaluation/EvaluationRunner.cs
+src/VelibLLM.Evaluation/Contracts.cs
+src/VelibLLM.Evaluation/EvaluationModels.cs
+src/VelibLLM.Evaluation/AnswerJudge.cs
+src/VelibLLM.Core.Tests/VectorStoreServiceTests.cs
+src/VelibLLM.Core.Tests/VelibLLM.Core.Tests.csproj
+Plan
+Créer src/VelibLLM.Core.Tests/EvaluationRunnerTests.cs avec namespace VelibLLM.Core.Tests, using VelibLLM.Evaluation et using Xunit, dans le style de VectorStoreServiceTests.
+Écrire dans le même fichier des fakes privés imbriqués : FakeChatAgent (délégué ou throw sur une question donnée, avec compteur d'appels) et FakeJudge (throw ou verdict fixe).
+Test 1 : RunAsync([], false, CancellationToken.None) → TotalTests, PassedTests, IntentAccuracy, ToolSelectionAccuracy, ToolArgumentsAccuracy, AnswerAccuracy, HallucinationFreeRate et AverageLatencyMs valent 0 ; AverageJudgeScore, JudgeCorrectRate et JudgeHallucinationFreeRate sont null.
+Test 2 : trois EvaluationCase, avec ChatAsync qui lève sur le premier. Vérifier Error == message et Success == false pour ce cas, Error null pour les autres, TotalTests == 3 et le compteur d'appels == 3. Ne pas asserter LatencyMs.
+Test 3 : un cas, includeJudge = true, agent normal et JudgeAsync qui lève. Vérifier Judge non null, Score == 0 et Reason.StartsWith("Judge call failed") (comparaison ordinale), plus l'absence de Error.
+Lancer dotnet build TestLLMVlib.slnx (0 erreur, aucun nouvel avertissement) puis dotnet test TestLLMVlib.slnx (+3 tests, 0 échec).
+Vérifier avec git status que seul le nouveau fichier a été ajouté, sans commit, push ni merge.
+Risks
+Le csproj de tests ne référence que TestLLMVlib.csproj. La référence transitive à VelibLLM.Evaluation est supposée fonctionner et n'a pas été compilée.
+Le répertoire src/VelibLLM.Core.Tests n'est pas forcément exclu de la compilation de TestLLMVlib.csproj (Compile Remove). Il faudra vérifier avec dotnet build.
+Un fake de chat agent doit lever l'exception pour un seul cas et répondre normalement pour les autres. Il doit en plus exposer un compteur d'appels pour prouver que les cas suivants sont évalués.
+Ne pas asserter LatencyMs : il vient de Stopwatch.
+L'exigence « aucun nouvel avertissement » : les fakes doivent respecter la nullabilité, avec des Task retournées sans warning async.
+Aucun test existant ne couvre l'évaluation, donc le delta attendu est exactement +3 tests.

@@ -1,0 +1,6 @@
+APPROVED:
+completed
+Le fichier EvaluationRunnerTests.cs contient 3 [Fact] qui couvrent les cas demandés : liste vide, exception de l'agent avec évaluation des autres cas, exception du juge. Les fakes sont locaux et aucun appel réseau n'est fait. Aucune valeur exacte de LatencyMs n'est testée. Le périmètre est respecté : un seul fichier ajouté, sans modification de production, de .csproj ni de .slnx. D'après les preuves de l'hôte, le build donne 0 erreur et 9 tests sur 9 passent. Je n'ai exécuté ni build ni test moi-même. Les avertissements NU1903 existaient déjà.
+
+Issues
+none
